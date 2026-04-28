@@ -1,78 +1,910 @@
-<Window x:Class="MainWindow"
+<Window x:Class="DroneGCS.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:helix="http://helix-toolkit.org/wpf"
-        Title="AUBR - مركز التحكم التكتيكي" Height="750" Width="1250" Background="#0F0F12">
+        xmlns:local="clr-namespace:DroneGCS"
+        Title="منظومة الاعتراض الحدودية — GCS v1.0"
+        Height="900" Width="1600"
+        Background="#0A0E1A"
+        WindowState="Maximized"
+        FontFamily="Segoe UI">
 
     <Window.Resources>
-        <Style x:Key="TacticalButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#1A1A1D"/>
-            <Setter Property="Foreground" Value="Cyan"/>
-            <Setter Property="BorderBrush" Value="#00FFFF"/>
+        <!-- Color Palette -->
+        <SolidColorBrush x:Key="BgPrimary"    Color="#0A0E1A"/>
+        <SolidColorBrush x:Key="BgPanel"      Color="#0F1628"/>
+        <SolidColorBrush x:Key="BgCard"       Color="#141C35"/>
+        <SolidColorBrush x:Key="AccentGreen"  Color="#00FF88"/>
+        <SolidColorBrush x:Key="AccentCyan"   Color="#00D4FF"/>
+        <SolidColorBrush x:Key="AccentRed"    Color="#FF3B3B"/>
+        <SolidColorBrush x:Key="AccentYellow" Color="#FFD600"/>
+        <SolidColorBrush x:Key="TextPrimary"  Color="#E8F0FF"/>
+        <SolidColorBrush x:Key="TextMuted"    Color="#5A6A8A"/>
+        <SolidColorBrush x:Key="BorderGlow"   Color="#1A3060"/>
+
+        <!-- Panel Style -->
+        <Style x:Key="PanelStyle" TargetType="Border">
+            <Setter Property="Background" Value="#0F1628"/>
+            <Setter Property="BorderBrush" Value="#1A3060"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10"/>
-            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Margin" Value="4"/>
+        </Style>
+
+        <!-- Header Label -->
+        <Style x:Key="PanelHeader" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#00D4FF"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="10,8,0,6"/>
+        </Style>
+
+        <!-- Value Label -->
+        <Style x:Key="ValueLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#E8F0FF"/>
+            <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <!-- Muted Label -->
+        <Style x:Key="MutedLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#5A6A8A"/>
+            <Setter Property="FontSize" Value="10"/>
+        </Style>
+
+        <!-- Action Button -->
+        <Style x:Key="ActionButton" TargetType="Button">
+            <Setter Property="Background" Value="#1A3060"/>
+            <Setter Property="Foreground" Value="#00D4FF"/>
+            <Setter Property="BorderBrush" Value="#00D4FF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#00D4FF"/>
+                                <Setter Property="Foreground" Value="#0A0E1A"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#0099CC"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Danger Button -->
+        <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+            <Setter Property="BorderBrush" Value="#FF3B3B"/>
+            <Setter Property="Foreground" Value="#FF3B3B"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#00FFFF"/>
-                    <Setter Property="Foreground" Value="Black"/>
+                    <Setter Property="Background" Value="#FF3B3B"/>
+                    <Setter Property="Foreground" Value="#FFFFFF"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+        <!-- Success Button -->
+        <Style x:Key="SuccessButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+            <Setter Property="BorderBrush" Value="#00FF88"/>
+            <Setter Property="Foreground" Value="#00FF88"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#00FF88"/>
+                    <Setter Property="Foreground" Value="#0A0E1A"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="ImageStyle1" TargetType="{x:Type Image}"/>
+
     </Window.Resources>
 
-    <Grid Margin="10">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="3*"/>
-            <ColumnDefinition Width="1*"/>
-        </Grid.ColumnDefinitions>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/>
+            <!-- Top Bar -->
+            <RowDefinition Height="6*"/>
+            <RowDefinition/>
+            <!-- Main Content -->
+            <RowDefinition Height="36"/>
+            <!-- Status Bar -->
+        </Grid.RowDefinitions>
 
-        <Border Grid.Column="0" BorderBrush="#333" BorderThickness="1" CornerRadius="5" Margin="5">
-            <Grid>
-                <helix:HelixViewport3D x:Name="Viewport" ZoomExtentsWhenLoaded="True" ShowFrameRate="True" CameraRotationMode="Trackball">
-                    <helix:DefaultLights/>
-                    <helix:BoxVisual3D x:Name="InterceptorModel" Width="0.6" Length="0.6" Height="0.2" Fill="Lime"/>
-                    <helix:BoxVisual3D x:Name="TargetModel" Width="0.6" Length="0.6" Height="0.2" Fill="Red"/>
-                    <helix:GridLinesVisual3D Width="1000" Length="1000" Thickness="0.1" Fill="Gray"/>
-                </helix:HelixViewport3D>
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- TOP BAR                                             -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <Border Grid.Row="0" Background="#080C18" BorderBrush="#1A3060" BorderThickness="0,0,0,1">
+            <Grid Margin="16,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-                <StackPanel VerticalAlignment="Top" HorizontalAlignment="Left" Margin="20">
-                    <TextBlock Text="SYSTEM STATUS: ACTIVE" Foreground="Lime" FontSize="12" FontWeight="Bold"/>
-                    <TextBlock x:Name="TxtDistance" Text="DISTANCE: 0.0m" Foreground="White" FontSize="12"/>
+                <!-- Logo + Title -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="⬡" Foreground="#00D4FF" FontSize="22" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="SkyRecon : Tolan Grid" Foreground="#E8F0FF" FontSize="13" FontWeight="Bold"/>
+                        <TextBlock Text="منظومة الاعتراض الحدودية — الإصدار 1.0" Foreground="#5A6A8A" FontSize="9"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Center: Mission Clock + Mode -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20,0">
+                    <Border Background="#141C35" BorderBrush="#1A3060" BorderThickness="1" CornerRadius="4" Padding="12,4" Margin="6,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⏱ " Foreground="#5A6A8A" FontSize="11"/>
+                            <TextBlock x:Name="MissionClock" Text="00:00:00" Foreground="#00D4FF" FontSize="13" FontFamily="Consolas" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+                    <Border x:Name="ModeIndicator" Background="#1A3060" BorderBrush="#00FF88" BorderThickness="1" CornerRadius="4" Padding="12,4" Margin="6,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="ModeLight" Width="8" Height="8" Fill="#00FF88" Margin="0,0,6,0">
+                                <Ellipse.Triggers>
+                                    <EventTrigger RoutedEvent="Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard RepeatBehavior="Forever">
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0.2" Duration="0:0:0.8" AutoReverse="True"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Ellipse.Triggers>
+                            </Ellipse>
+                            <TextBlock x:Name="ModeText" Text="AUTO — PATROL" Foreground="#00FF88" FontSize="11" FontWeight="Bold" FontFamily="Consolas"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#141C35" BorderBrush="#1A3060" BorderThickness="1" CornerRadius="4" Padding="12,4" Margin="6,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="THREAT: " Foreground="#5A6A8A" FontSize="11"/>
+                            <TextBlock x:Name="ThreatLevel" Text="NONE" Foreground="#00FF88" FontSize="11" FontWeight="Bold" FontFamily="Consolas"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Right: Controls -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="BtnToggleMode" Content="⚡ MANUAL OVERRIDE" Style="{StaticResource ActionButton}" Margin="4,0" Click="BtnToggleMode_Click"/>
+                    <Button x:Name="BtnEmergency" Content="🛑 ABORT ALL" Style="{StaticResource DangerButton}" Margin="4,0" Click="BtnAbort_Click"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <StackPanel Grid.Column="1" Margin="5">
-            <TextBlock Text="بث الكاميرا المباشر" Foreground="Cyan" Margin="0,0,0,10" FontSize="16" FontWeight="Bold"/>
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- MAIN CONTENT GRID                                   -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <Grid Grid.Row="1" Margin="4,4,4,4" Grid.RowSpan="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280"/>
+                <!-- Left Panel -->
+                <ColumnDefinition Width="*"/>
+                <!-- Center: Map + Viewport -->
+                <ColumnDefinition Width="300"/>
+                <!-- Right Panel -->
+            </Grid.ColumnDefinitions>
 
-            <Border x:Name="CameraArea" BorderBrush="Cyan" BorderThickness="2" Height="220" CornerRadius="3" Background="#111" 
-                    MouseDown="CameraFeed_MouseDown" MouseMove="CameraArea_MouseMove">
-                <Canvas x:Name="TargetingCanvas" ClipToBounds="True">
-                    <TextBlock Text="Waiting for AI Vision Feed..." Foreground="#444" Canvas.Top="100" Canvas.Left="50"/>
-                    <Image x:Name="CameraFeed" Stretch="Uniform" Width="{Binding ElementName=TargetingCanvas, Path=ActualWidth}" Height="{Binding ElementName=TargetingCanvas, Path=ActualHeight}"/>
+            <!-- ════════════════════════════ -->
+            <!-- LEFT PANEL                  -->
+            <!-- ════════════════════════════ -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <!-- Drone Status -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Targeting Data -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- System Status -->
+                    <RowDefinition Height="*"/>
+                    <!-- Mission Log -->
+                </Grid.RowDefinitions>
 
-                    <Ellipse x:Name="MouseReticle" Width="30" Height="30" Stroke="Yellow" StrokeThickness="2" Visibility="Hidden">
-                        <Ellipse.RenderTransform>
-                            <TranslateTransform x:Name="ReticleTransform"/>
-                        </Ellipse.RenderTransform>
-                    </Ellipse>
-                </Canvas>
-            </Border>
+                <!-- Drone Status Card -->
+                <Border Grid.Row="0" Style="{StaticResource PanelStyle}">
+                    <StackPanel Margin="10,8">
+                        <TextBlock Text="◈ DRONE STATUS" Style="{StaticResource PanelHeader}"/>
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
 
-            <TextBlock Text="مقترح الذكاء الاصطناعي:" Foreground="Yellow" Margin="0,20,0,5" FontWeight="Bold"/>
-            <Border Background="#222" CornerRadius="5" Padding="15">
-                <TextBlock x:Name="TxtSuggestion" Text="بانتظار تحليل بيانات الهدف..." Foreground="White" TextWrapping="Wrap" FontSize="13" Height="60"/>
-            </Border>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="الحالة" Style="{StaticResource MutedLabel}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="DroneState" Text="SCAN" Foreground="#00FF88" FontSize="12" FontWeight="Bold" FontFamily="Consolas" HorizontalAlignment="Left" Margin="10,0,0,0" Width="101"/>
 
-            <Separator Margin="0,20" Background="#333"/>
-            <TextBlock Text="الأوامر التكتيكية" Foreground="White" Margin="0,0,0,15" FontSize="14"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="الارتفاع" Style="{StaticResource MutedLabel}" Margin="0,4,0,0"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="DroneAltitude" Text="120 m" Style="{StaticResource ValueLabel}" HorizontalAlignment="Right" Margin="0,4,0,0"/>
 
-            <Button Content="دفع جانبي (Lateral)" Tag="LATERAL_NUDGE" Click="BtnCommand_Click" Style="{StaticResource TacticalButtonStyle}" Margin="0,5"/>
-            <Button Content="ضغط علوي (Prop Wash)" Tag="TOP_DOWN_PRESSURE" Click="BtnCommand_Click" Style="{StaticResource TacticalButtonStyle}" Margin="0,5"/>
-            <Button Content="تعمية بصرية (Blind)" Tag="VISUAL_BLINDING" Click="BtnCommand_Click" Style="{StaticResource TacticalButtonStyle}" Margin="0,5"/>
-            <Button x:Name="BtnAutoEscort" Content="تفعيل المرافقة الآلية" Tag="ESCORT" Click="BtnCommand_Click" Background="#2ECC71" Foreground="Black" FontWeight="Bold" Margin="0,20" Height="45"/>
-        </StackPanel>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="السرعة" Style="{StaticResource MutedLabel}" Margin="0,4,0,0"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="DroneSpeed" Text="18.5 m/s" Style="{StaticResource ValueLabel}" HorizontalAlignment="Right" Margin="0,4,0,0"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="البطارية" Style="{StaticResource MutedLabel}" Margin="0,4,0,0"/>
+                            <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
+                                <Border Width="60" Height="10" BorderBrush="#1A3060" BorderThickness="1" CornerRadius="2">
+                                    <Grid>
+                                        <Rectangle x:Name="BatteryFill" Fill="#00FF88" Width="55" HorizontalAlignment="Left" RadiusX="2" RadiusY="2"/>
+                                    </Grid>
+                                </Border>
+                                <TextBlock x:Name="BatteryPct" Text=" 87%" Foreground="#00FF88" FontSize="10" FontFamily="Consolas"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="GPS Lock" Style="{StaticResource MutedLabel}" Margin="0,4,0,0"/>
+                            <TextBlock Grid.Row="4" Grid.Column="1" x:Name="GpsLock" Text="✓ 14 SAT" Foreground="#00FF88" FontSize="10" FontFamily="Consolas" HorizontalAlignment="Right" Margin="0,4,0,0"/>
+                        </Grid>
+
+                        <!-- Phase Indicator -->
+                        <Border Background="#0A0E1A" BorderBrush="#1A3060" BorderThickness="1" CornerRadius="4" Margin="0,8,0,0" Padding="8,6">
+                            <StackPanel>
+                                <TextBlock Text="مرحلة الاعتراض" Foreground="#5A6A8A" FontSize="9" Margin="0,0,0,4"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Border x:Name="Phase1Border" Background="#00FF88" CornerRadius="3" Padding="6,3" Margin="2,0">
+                                        <TextBlock Text="1 SCAN" Foreground="#0A0E1A" FontSize="9" FontWeight="Bold"/>
+                                    </Border>
+                                    <TextBlock Text="›" Foreground="#1A3060" VerticalAlignment="Center" Margin="2,0" FontSize="14"/>
+                                    <Border x:Name="Phase2Border" Background="#141C35" BorderBrush="#1A3060" BorderThickness="1" CornerRadius="3" Padding="6,3" Margin="2,0">
+                                        <TextBlock x:Name="Phase2Text" Text="2 TRACK" Foreground="#5A6A8A" FontSize="9" FontWeight="Bold"/>
+                                    </Border>
+                                    <TextBlock Text="›" Foreground="#1A3060" VerticalAlignment="Center" Margin="2,0" FontSize="14"/>
+                                    <Border x:Name="Phase3Border" Background="#141C35" BorderBrush="#1A3060" BorderThickness="1" CornerRadius="3" Padding="6,3" Margin="2,0">
+                                        <TextBlock x:Name="Phase3Text" Text="3 WIRE" Foreground="#5A6A8A" FontSize="9" FontWeight="Bold"/>
+                                    </Border>
+                                    <TextBlock Text="›" Foreground="#1A3060" VerticalAlignment="Center" Margin="2,0" FontSize="14"/>
+                                    <Border x:Name="Phase4Border" Background="#141C35" BorderBrush="#1A3060" BorderThickness="1" CornerRadius="3" Padding="6,3" Margin="2,0">
+                                        <TextBlock x:Name="Phase4Text" Text="4 RAM" Foreground="#5A6A8A" FontSize="9" FontWeight="Bold"/>
+                                    </Border>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Targeting Data -->
+                <Border Grid.Row="1" Style="{StaticResource PanelStyle}">
+                    <StackPanel Margin="10,8">
+                        <TextBlock Text="◈ TARGETING DATA" Style="{StaticResource PanelHeader}"/>
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="المسافة" Style="{StaticResource MutedLabel}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TargetDistance" Text="---" Foreground="#FFD600" FontSize="13" FontWeight="Bold" FontFamily="Consolas" HorizontalAlignment="Right"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="السرعة النسبية" Style="{StaticResource MutedLabel}" Margin="0,4,0,0"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="RelativeVelocity" Text="---" Style="{StaticResource ValueLabel}" HorizontalAlignment="Right" Margin="0,4,0,0"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="زاوية الهجوم" Style="{StaticResource MutedLabel}" Margin="0,4,0,0"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="AttackAngle" Text="---" Style="{StaticResource ValueLabel}" HorizontalAlignment="Right" Margin="0,4,0,0"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="LiDAR Range" Style="{StaticResource MutedLabel}" Margin="0,4,0,0"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="LidarRange" Text="---" Style="{StaticResource ValueLabel}" HorizontalAlignment="Right" Margin="0,4,0,0"/>
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="توقيع صوتي" Style="{StaticResource MutedLabel}" Margin="0,4,0,0"/>
+                            <TextBlock Grid.Row="4" Grid.Column="1" x:Name="AcousticSig" Text="---" Style="{StaticResource ValueLabel}" HorizontalAlignment="Right" Margin="0,4,0,0"/>
+                        </Grid>
+
+                        <!-- Thermal Detection -->
+                        <Border Background="#0A0E1A" BorderBrush="#1A3060" BorderThickness="1" CornerRadius="4" Margin="0,8,0,0" Padding="8,6">
+                            <StackPanel>
+                                <TextBlock Text="⚠ THERMAL SIGNATURE" Foreground="#5A6A8A" FontSize="9" Margin="0,0,0,4"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="خطر متفجرات: " Foreground="#5A6A8A" FontSize="10"/>
+                                    <TextBlock x:Name="ExplosiveRisk" Text="منخفض" Foreground="#00FF88" FontSize="10" FontWeight="Bold"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                    <TextBlock Text="درجة الحرارة: " Foreground="#5A6A8A" FontSize="10"/>
+                                    <TextBlock x:Name="ThermalTemp" Text="---°C" Foreground="#FFD600" FontSize="10" FontWeight="Bold" FontFamily="Consolas"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- System Status -->
+                <Border Grid.Row="2" Style="{StaticResource PanelStyle}">
+                    <StackPanel Margin="10,8">
+                        <TextBlock Text="◈ SYSTEM STATUS" Style="{StaticResource PanelHeader}"/>
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="أسلاك الكيفلار" Style="{StaticResource MutedLabel}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="KevlarStatus" Text="● READY" Foreground="#00FF88" FontSize="10" FontFamily="Consolas"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="LiDAR Sensor" Style="{StaticResource MutedLabel}" Margin="0,4,0,0"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="LidarStatus" Text="● ACTIVE" Foreground="#00FF88" FontSize="10" FontFamily="Consolas" Margin="0,4,0,0"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="مصفوفة الميكروفون" Style="{StaticResource MutedLabel}" Margin="0,4,0,0"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="MicStatus" Text="● ACTIVE" Foreground="#00FF88" FontSize="10" FontFamily="Consolas" Margin="0,4,0,0"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="الكاميرا الحرارية" Style="{StaticResource MutedLabel}" Margin="0,4,0,0"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="ThermalStatus" Text="● ACTIVE" Foreground="#00FF88" FontSize="10" FontFamily="Consolas" Margin="0,4,0,0"/>
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Kamikaze Mode" Style="{StaticResource MutedLabel}" Margin="0,4,0,0"/>
+                            <TextBlock Grid.Row="4" Grid.Column="1" x:Name="KamikazeStatus" Text="○ STANDBY" Foreground="#5A6A8A" FontSize="10" FontFamily="Consolas" Margin="0,4,0,0"/>
+                        </Grid>
+
+                        <!-- Action Buttons -->
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="🔗 DEPLOY WIRE" Style="{StaticResource SuccessButton}" Margin="0,0,2,0" Click="BtnDeployWire_Click" x:Name="BtnDeployWire" IsEnabled="False"/>
+                            <Button Grid.Column="1" Content="💥 KAMIKAZE" Style="{StaticResource DangerButton}" Margin="2,0,0,0" Click="BtnKamikaze_Click" x:Name="BtnKamikaze" IsEnabled="False"/>
+                        </Grid>
+                        <Button Content="🎯 ENGAGE TARGET" Style="{StaticResource ActionButton}" Margin="0,2.5,0,0" Width="Auto" Click="BtnEngage_Click" x:Name="BtnEngage" IsEnabled="False"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Mission Log -->
+                <Border Grid.Row="3" Style="{StaticResource PanelStyle}" HorizontalAlignment="Center" Margin="0,1,0,4" Width="272">
+                    <Grid Margin="10,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="3*"/>
+                            <ColumnDefinition Width="7*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="◈ MISSION LOG" Style="{StaticResource PanelHeader}" RenderTransformOrigin="0.5,0.5" Margin="10,0,0,100" Grid.ColumnSpan="2" Grid.RowSpan="2">
+                            <TextBlock.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform/>
+                                    <SkewTransform AngleX="0"/>
+                                    <RotateTransform/>
+                                    <TranslateTransform X="0"/>
+                                </TransformGroup>
+                            </TextBlock.RenderTransform>
+                        </TextBlock>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,4,0,0" Grid.ColumnSpan="2">
+                            <ItemsControl x:Name="MissionLogList" Height="100">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" Foreground="#5A6A8A" FontSize="9" FontFamily="Consolas" TextWrapping="Wrap" Margin="0,1"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ════════════════════════════ -->
+            <!-- CENTER: MAP + VIEWPORT       -->
+            <!-- ════════════════════════════ -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <!-- GIS Map -->
+                    <RowDefinition Height="220"/>
+                    <!-- Bottom: Thermal + PID -->
+                </Grid.RowDefinitions>
+
+                <!-- GIS Map -->
+                <Border Grid.Row="0" Style="{StaticResource PanelStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="10,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="◈ GIS MAP — BORDER ZONE" Style="{StaticResource PanelHeader}" Margin="0,0,0,0"/>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                <TextBlock Text="Scale: 1:50000" Foreground="#5A6A8A" FontSize="9" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <Button Content="⊕ Zoom In" Style="{StaticResource ActionButton}" Padding="6,3" FontSize="9" Margin="2,0" Click="BtnZoomIn_Click"/>
+                                <Button Content="⊖ Zoom Out" Style="{StaticResource ActionButton}" Padding="6,3" FontSize="9" Margin="2,0" Click="BtnZoomOut_Click"/>
+                                <Button Content="⌖ Center" Style="{StaticResource ActionButton}" Padding="6,3" FontSize="9" Margin="2,0" Click="BtnCenter_Click"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Map Canvas -->
+                        <Canvas x:Name="MapCanvas" Grid.Row="1" ClipToBounds="True"
+                                MouseLeftButtonDown="MapCanvas_MouseDown"
+                                MouseMove="MapCanvas_MouseMove"
+                                MouseLeftButtonUp="MapCanvas_MouseUp"
+                                MouseWheel="MapCanvas_MouseWheel">
+
+                            <!-- Map Background Grid -->
+                            <Canvas.Background>
+                                <DrawingBrush TileMode="Tile" Viewport="0,0,40,40" ViewportUnits="Absolute">
+                                    <DrawingBrush.Drawing>
+                                        <GeometryDrawing>
+                                            <GeometryDrawing.Geometry>
+                                                <GeometryGroup>
+                                                    <RectangleGeometry Rect="0,0,40,40"/>
+                                                </GeometryGroup>
+                                            </GeometryDrawing.Geometry>
+                                            <GeometryDrawing.Pen>
+                                                <Pen Brush="#0D1530" Thickness="0.5"/>
+                                            </GeometryDrawing.Pen>
+                                        </GeometryDrawing>
+                                    </DrawingBrush.Drawing>
+                                </DrawingBrush>
+                            </Canvas.Background>
+
+                            <!-- Border Zone (Polygon - drawn in code) -->
+                            <Polygon x:Name="BorderPolygon"
+                                     Points="100,80 800,80 800,500 100,500"
+                                     Fill="#0A2040" Stroke="#00D4FF" StrokeThickness="2"
+                                     StrokeDashArray="8,4" Opacity="0.5"/>
+
+                            <!-- Danger Zone (inner red) -->
+                            <Polygon x:Name="DangerZone"
+                                     Points="100,80 800,80 800,200 100,200"
+                                     Fill="#300000" Stroke="#FF3B3B" StrokeThickness="1"
+                                     StrokeDashArray="4,4" Opacity="0.4"/>
+
+                            <!-- Border Label -->
+                            <TextBlock Canvas.Left="110" Canvas.Top="85" Text="◄ SECURED ZONE" Foreground="#00D4FF" FontSize="9" FontFamily="Consolas" Opacity="0.7"/>
+                            <TextBlock Canvas.Left="110" Canvas.Top="85" Text="◄ SECURED ZONE" Foreground="#00D4FF" FontSize="9" FontFamily="Consolas" Opacity="0.7"/>
+                            <TextBlock Canvas.Left="110" Canvas.Top="205" Text="⚠ THREAT INTERCEPT ZONE" Foreground="#FF3B3B" FontSize="9" FontFamily="Consolas" Opacity="0.8"/>
+
+                            <!-- Patrol Path (dashed line) -->
+                            <Polyline x:Name="PatrolPath"
+                                      Points="150,400 300,400 450,400 600,400 750,400"
+                                      Stroke="#1A5040" StrokeThickness="1" StrokeDashArray="4,8"/>
+
+                            <!-- Our Drone (triangle) -->
+                            <Canvas x:Name="OurDroneCanvas" Canvas.Left="300" Canvas.Top="380">
+                                <Polygon Points="0,-14 10,8 -10,8" Fill="#00D4FF" Stroke="#FFFFFF" StrokeThickness="1">
+                                    <Polygon.RenderTransform>
+                                        <RotateTransform x:Name="DroneRotation" CenterX="0" CenterY="0"/>
+                                    </Polygon.RenderTransform>
+                                </Polygon>
+                                <!-- Scan radius -->
+                                <Ellipse Width="60" Height="60" Canvas.Left="-30" Canvas.Top="-30"
+                                         Stroke="#00D4FF" StrokeThickness="0.5" Fill="Transparent" Opacity="0.3"/>
+                                <TextBlock x:Name="OurDroneLabel" Text="ALPHA-1" Canvas.Left="12" Canvas.Top="-6"
+                                           Foreground="#00D4FF" FontSize="8" FontFamily="Consolas"/>
+                            </Canvas>
+
+                            <!-- Enemy Drone (diamond shape) -->
+                            <Canvas x:Name="EnemyDroneCanvas" Canvas.Left="550" Canvas.Top="150" Visibility="Collapsed">
+                                <Polygon Points="0,-12 12,0 0,12 -12,0" Fill="#FF3B3B" Stroke="#FFD600" StrokeThickness="1.5">
+                                    <Polygon.Triggers>
+                                        <EventTrigger RoutedEvent="Loaded">
+                                            <BeginStoryboard>
+                                                <Storyboard RepeatBehavior="Forever">
+                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0.3" Duration="0:0:0.5" AutoReverse="True"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </EventTrigger>
+                                    </Polygon.Triggers>
+                                </Polygon>
+                                <TextBlock Text="HOSTILE" Canvas.Left="14" Canvas.Top="-6" Foreground="#FF3B3B" FontSize="8" FontFamily="Consolas" FontWeight="Bold"/>
+                                <TextBlock x:Name="EnemyTypeLabel" Text="UNKNOWN" Canvas.Left="14" Canvas.Top="4" Foreground="#FFD600" FontSize="7" FontFamily="Consolas"/>
+                            </Canvas>
+
+                            <!-- Intercept Vector Line -->
+                            <Line x:Name="InterceptLine" X1="310" Y1="385" X2="560" Y2="155"
+                                  Stroke="#FFD600" StrokeThickness="1" StrokeDashArray="6,3"
+                                  Opacity="0" Visibility="Collapsed"/>
+
+                            <!-- Wire Deploy Indicator -->
+                            <Canvas x:Name="WireCanvas" Visibility="Collapsed">
+                                <Ellipse Width="30" Height="30" Canvas.Left="-15" Canvas.Top="-15"
+                                         Stroke="#00FF88" StrokeThickness="2" Fill="Transparent"/>
+                                <TextBlock Text="WIRE" Canvas.Left="-10" Canvas.Top="-6" Foreground="#00FF88" FontSize="7" FontFamily="Consolas" FontWeight="Bold"/>
+                            </Canvas>
+
+                            <!-- Map Legend -->
+                            <Border Canvas.Right="10" Canvas.Bottom="10" Background="#080C18" BorderBrush="#1A3060" BorderThickness="1" CornerRadius="4" Padding="8,6">
+                                <StackPanel>
+                                    <TextBlock Text="LEGEND" Foreground="#5A6A8A" FontSize="8" FontFamily="Consolas" Margin="0,0,0,4"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,1">
+                                        <Polygon Points="0,-6 5,4 -5,4" Fill="#00D4FF" Width="12" Height="12"/>
+                                        <TextBlock Text=" Our Drone" Foreground="#5A6A8A" FontSize="8" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,1">
+                                        <Polygon Points="0,-6 6,0 0,6 -6,0" Fill="#FF3B3B" Width="12" Height="12"/>
+                                        <TextBlock Text=" Hostile" Foreground="#5A6A8A" FontSize="8" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,1">
+                                        <Rectangle Width="12" Height="4" Fill="#0A2040" Stroke="#00D4FF" StrokeThickness="0.5"/>
+                                        <TextBlock Text=" Border Zone" Foreground="#5A6A8A" FontSize="8" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,1">
+                                        <Rectangle Width="12" Height="4" Fill="#300000" Stroke="#FF3B3B" StrokeThickness="0.5"/>
+                                        <TextBlock Text=" Danger Zone" Foreground="#5A6A8A" FontSize="8" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                            <Image Height="100" Canvas.Left="511" Canvas.Top="13" Width="100">
+                                <Image.OpacityMask>
+                                    <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                                        <GradientStop Color="Black"/>
+                                        <GradientStop Color="#FF7E3F3F" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Image.OpacityMask>
+                            </Image>
+                        </Canvas>
+                    </Grid>
+                </Border>
+
+                <!-- Bottom Row: Thermal Camera + PID Chart -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Thermal Camera View -->
+                    <Border Grid.Column="0" Style="{StaticResource PanelStyle}">
+                        <Grid Margin="8,6">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid Grid.Row="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="◈ THERMAL CAMERA" Style="{StaticResource PanelHeader}" Margin="0"/>
+                                <Border Grid.Column="2" Background="#141C35" BorderBrush="#FFD600" BorderThickness="1" CornerRadius="3" Padding="6,2">
+                                    <TextBlock x:Name="ThermalModeLabel" Text="IR MODE: LIVE" Foreground="#FFD600" FontSize="8" FontFamily="Consolas"/>
+                                </Border>
+                            </Grid>
+                            <!-- Thermal Canvas -->
+                            <Canvas x:Name="ThermalCanvas" Grid.Row="1" Background="#000000" ClipToBounds="True" Margin="0,4,0,0">
+                                <!-- Simulated thermal gradient background -->
+                                <Rectangle Width="400" Height="160" Canvas.Left="0" Canvas.Top="0">
+                                    <Rectangle.Fill>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#050A15" Offset="0.0"/>
+                                            <GradientStop Color="#0A1525" Offset="0.4"/>
+                                            <GradientStop Color="#152040" Offset="0.8"/>
+                                            <GradientStop Color="#050A15" Offset="1.0"/>
+                                        </LinearGradientBrush>
+                                    </Rectangle.Fill>
+                                </Rectangle>
+
+                                <!-- Crosshair -->
+                                <Line Canvas.Left="0" Canvas.Top="80" X1="0" Y1="0" X2="400" Y2="0" Stroke="#1A3060" StrokeThickness="0.5"/>
+                                <Line Canvas.Left="200" Canvas.Top="0" X1="0" Y1="0" X2="0" Y2="160" Stroke="#1A3060" StrokeThickness="0.5"/>
+
+                                <!-- Thermal hotspot (enemy drone simulation) -->
+                                <Ellipse x:Name="ThermalHotspot" Width="40" Height="20"
+                                         Canvas.Left="180" Canvas.Top="70"
+                                         Opacity="0" Visibility="Collapsed">
+                                    <Ellipse.Fill>
+                                        <RadialGradientBrush>
+                                            <GradientStop Color="#FFFFFFFF" Offset="0"/>
+                                            <GradientStop Color="#FFFF4400" Offset="0.5"/>
+                                            <GradientStop Color="#00FF0000" Offset="1"/>
+                                        </RadialGradientBrush>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+
+                                <!-- Scan Lines -->
+                                <Rectangle x:Name="ScanLine" Width="400" Height="2" Canvas.Left="0" Canvas.Top="0"
+                                           Opacity="0.3">
+                                    <Rectangle.Fill>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="Transparent" Offset="0"/>
+                                            <GradientStop Color="#00FF88" Offset="0.5"/>
+                                            <GradientStop Color="Transparent" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Rectangle.Fill>
+                                    <Rectangle.Triggers>
+                                        <EventTrigger RoutedEvent="Loaded">
+                                            <BeginStoryboard>
+                                                <Storyboard RepeatBehavior="Forever">
+                                                    <DoubleAnimation Storyboard.TargetName="ScanLine"
+                                                                     Storyboard.TargetProperty="(Canvas.Top)"
+                                                                     From="0" To="160" Duration="0:0:2"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </EventTrigger>
+                                    </Rectangle.Triggers>
+                                </Rectangle>
+
+                                <!-- Thermal Color Scale -->
+                                <Border Canvas.Right="4" Canvas.Top="4" Canvas.Bottom="4" Width="14">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Color="#FFFFFF" Offset="0.0"/>
+                                            <GradientStop Color="#FF4400" Offset="0.33"/>
+                                            <GradientStop Color="#FFD600" Offset="0.66"/>
+                                            <GradientStop Color="#000088" Offset="1.0"/>
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>
+                                <TextBlock Canvas.Right="18" Canvas.Top="2" Text="HOT" Foreground="#FFFFFF" FontSize="7" FontFamily="Consolas"/>
+                                <TextBlock Canvas.Right="18" Canvas.Bottom="2" Text="COLD" Foreground="#5588FF" FontSize="7" FontFamily="Consolas"/>
+
+                                <!-- Explosive Warning Overlay -->
+                                <Border x:Name="ExplosiveWarning" Canvas.Left="4" Canvas.Top="4"
+                                        Background="#80300000" BorderBrush="#FF3B3B" BorderThickness="1"
+                                        CornerRadius="3" Padding="4,2" Visibility="Collapsed">
+                                    <TextBlock Text="⚠ EXPLOSIVE MATERIAL DETECTED" Foreground="#FF3B3B" FontSize="8" FontWeight="Bold" FontFamily="Consolas"/>
+                                </Border>
+
+                                <!-- No Signal Overlay -->
+                                <Border x:Name="NoSignalOverlay" Canvas.Left="0" Canvas.Top="0"
+                                        Width="400" Height="160" Background="#AA000000" Visibility="Visible">
+                                    <TextBlock Text="NO TARGET IN RANGE" Foreground="#5A6A8A" FontSize="11"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               FontFamily="Consolas"/>
+                                </Border>
+                            </Canvas>
+                        </Grid>
+                    </Border>
+
+                    <!-- PID Monitor -->
+                    <Border Grid.Column="1" Style="{StaticResource PanelStyle}">
+                        <Grid Margin="8,6">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="◈ PID STABILITY MONITOR" Style="{StaticResource PanelHeader}" Margin="0"/>
+                            <Canvas x:Name="PIDCanvas" Grid.Row="1" Background="#080C18" ClipToBounds="True" Margin="0,4,0,0">
+                                <!-- Grid Lines -->
+                                <Line X1="0" Y1="80" X2="500" Y2="80" Stroke="#1A3060" StrokeThickness="0.5"/>
+                                <Line X1="0" Y1="40" X2="500" Y2="40" Stroke="#0D1530" StrokeThickness="0.5"/>
+                                <Line X1="0" Y1="120" X2="500" Y2="120" Stroke="#0D1530" StrokeThickness="0.5"/>
+                                <!-- Y-axis labels -->
+                                <TextBlock Canvas.Left="2" Canvas.Top="0" Text="+2" Foreground="#1A3060" FontSize="8" FontFamily="Consolas"/>
+                                <TextBlock Canvas.Left="2" Canvas.Top="74" Text=" 0" Foreground="#1A3060" FontSize="8" FontFamily="Consolas"/>
+                                <TextBlock Canvas.Left="2" Canvas.Top="148" Text="-2" Foreground="#1A3060" FontSize="8" FontFamily="Consolas"/>
+                                <!-- PID Lines drawn in code-behind -->
+                                <Polyline x:Name="PIDRollLine" Stroke="#00D4FF" StrokeThickness="1.5" Points=""/>
+                                <Polyline x:Name="PIDPitchLine" Stroke="#00FF88" StrokeThickness="1.5" Points=""/>
+                                <Polyline x:Name="PIDYawLine" Stroke="#FFD600" StrokeThickness="1.5" Points=""/>
+                                <!-- Legend -->
+                                <StackPanel Canvas.Right="4" Canvas.Top="4">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Rectangle Width="14" Height="2" Fill="#00D4FF" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                        <TextBlock Text="Roll" Foreground="#5A6A8A" FontSize="8" FontFamily="Consolas"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                        <Rectangle Width="14" Height="2" Fill="#00FF88" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                        <TextBlock Text="Pitch" Foreground="#5A6A8A" FontSize="8" FontFamily="Consolas"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                        <Rectangle Width="14" Height="2" Fill="#FFD600" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                                        <TextBlock Text="Yaw" Foreground="#5A6A8A" FontSize="8" FontFamily="Consolas"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Canvas>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!-- ════════════════════════════ -->
+            <!-- RIGHT PANEL: Digital Twin   -->
+            <!-- ════════════════════════════ -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <!-- Digital Twin Viewport -->
+                    <RowDefinition Height="200"/>
+                    <!-- Sensor Readouts -->
+                </Grid.RowDefinitions>
+
+                <!-- Digital Twin 2D Viewport -->
+                <Border Grid.Row="0" Style="{StaticResource PanelStyle}">
+                    <Grid Margin="8,6">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="◈ DIGITAL TWIN — 3D VIEW" Style="{StaticResource PanelHeader}" Margin="0"/>
+                            <Border Grid.Column="2" Background="#141C35" BorderBrush="#00D4FF" BorderThickness="1" CornerRadius="3" Padding="6,2">
+                                <TextBlock x:Name="TwinSyncLabel" Text="SYNC: LIVE" Foreground="#00D4FF" FontSize="8" FontFamily="Consolas"/>
+                            </Border>
+                        </Grid>
+
+                        <!-- 3D-style perspective viewport -->
+                        <Canvas x:Name="TwinCanvas" Grid.Row="1" Background="#050A15" ClipToBounds="True" Margin="0,4,0,0">
+                            <!-- Ground plane perspective -->
+                            <Polygon Points="20,200 280,200 250,120 50,120" Fill="#0A1520" Stroke="#1A3060" StrokeThickness="0.5" Opacity="0.6"/>
+                            <!-- Perspective grid lines -->
+                            <Line X1="150" Y1="120" X2="20" Y2="200" Stroke="#0D1530" StrokeThickness="0.5"/>
+                            <Line X1="150" Y1="120" X2="280" Y2="200" Stroke="#0D1530" StrokeThickness="0.5"/>
+                            <Line X1="70" Y1="147" X2="230" Y2="147" Stroke="#0D1530" StrokeThickness="0.5"/>
+                            <Line X1="50" Y1="167" X2="250" Y2="167" Stroke="#0D1530" StrokeThickness="0.5"/>
+                            <Line X1="30" Y1="185" X2="270" Y2="185" Stroke="#0D1530" StrokeThickness="0.5"/>
+
+                            <!-- Our Drone 3D representation -->
+                            <Canvas x:Name="TwinOurDrone" Canvas.Left="130" Canvas.Top="60">
+                                <!-- Body -->
+                                <Rectangle Width="20" Height="8" Canvas.Left="-10" Canvas.Top="-4" Fill="#00D4FF" RadiusX="2" RadiusY="2"/>
+                                <!-- Arms -->
+                                <Line X1="-18" Y1="0" X2="18" Y2="0" Stroke="#00D4FF" StrokeThickness="2"/>
+                                <Line X1="0" Y1="-18" X2="0" Y2="18" Stroke="#00D4FF" StrokeThickness="2"/>
+                                <!-- Rotors -->
+                                <Ellipse Width="16" Height="16" Canvas.Left="-26" Canvas.Top="-8" Stroke="#00D4FF" StrokeThickness="0.8" Fill="Transparent" Opacity="0.5"/>
+                                <Ellipse Width="16" Height="16" Canvas.Left="10" Canvas.Top="-8" Stroke="#00D4FF" StrokeThickness="0.8" Fill="Transparent" Opacity="0.5"/>
+                                <Ellipse Width="16" Height="16" Canvas.Left="-26" Canvas.Top="-8" Stroke="#00D4FF" StrokeThickness="0.8" Fill="Transparent" Opacity="0.5">
+                                    <Ellipse.RenderTransform>
+                                        <TranslateTransform Y="16"/>
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
+                                <Ellipse Width="16" Height="16" Canvas.Left="10" Canvas.Top="8" Stroke="#00D4FF" StrokeThickness="0.8" Fill="Transparent" Opacity="0.5"/>
+                                <!-- Shadow -->
+                                <Ellipse Width="24" Height="8" Canvas.Left="-12" Canvas.Top="30" Fill="#001020" Opacity="0.6"/>
+                                <TextBlock Text="ALPHA-1" Canvas.Left="-14" Canvas.Top="-20" Foreground="#00D4FF" FontSize="7" FontFamily="Consolas"/>
+                            </Canvas>
+
+                            <!-- Enemy Drone 3D representation -->
+                            <Canvas x:Name="TwinEnemyDrone" Canvas.Left="200" Canvas.Top="80" Visibility="Collapsed">
+                                <!-- Body -->
+                                <Rectangle Width="24" Height="10" Canvas.Left="-12" Canvas.Top="-5" Fill="#FF3B3B" RadiusX="1" RadiusY="1"/>
+                                <!-- Wing shape -->
+                                <Polygon Points="-20,0 0,-6 20,0 0,6" Fill="#CC2200" Stroke="#FF3B3B" StrokeThickness="1"/>
+                                <!-- Engine glow -->
+                                <Ellipse Width="8" Height="8" Canvas.Left="16" Canvas.Top="-4" Fill="#FF8800" Opacity="0.8"/>
+                                <!-- Shadow -->
+                                <Ellipse Width="28" Height="10" Canvas.Left="-14" Canvas.Top="30" Fill="#001020" Opacity="0.5"/>
+                                <TextBlock Text="HOSTILE" Canvas.Left="-14" Canvas.Top="-20" Foreground="#FF3B3B" FontSize="7" FontFamily="Consolas"/>
+                            </Canvas>
+
+                            <!-- Wire visualization -->
+                            <Line x:Name="TwinWireLine" X1="150" Y1="68" X2="210" Y2="88"
+                                  Stroke="#00FF88" StrokeThickness="1.5" StrokeDashArray="3,2"
+                                  Visibility="Collapsed" Opacity="0.8"/>
+
+                            <!-- Altitude indicator (our drone) -->
+                            <Line x:Name="TwinAltLine" X1="150" Y1="68" X2="150" Y2="175"
+                                  Stroke="#1A3060" StrokeThickness="0.5" StrokeDashArray="2,4"/>
+
+                            <!-- Status overlay -->
+                            <Border Canvas.Left="4" Canvas.Bottom="4" Background="#080C18" BorderBrush="#1A3060" BorderThickness="1" CornerRadius="3" Padding="6,4">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="ALT: " Foreground="#5A6A8A" FontSize="8" FontFamily="Consolas"/>
+                                        <TextBlock x:Name="TwinAlt" Text="120m" Foreground="#00D4FF" FontSize="8" FontFamily="Consolas"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="HDG: " Foreground="#5A6A8A" FontSize="8" FontFamily="Consolas"/>
+                                        <TextBlock x:Name="TwinHdg" Text="045°" Foreground="#00D4FF" FontSize="8" FontFamily="Consolas"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="SPD: " Foreground="#5A6A8A" FontSize="8" FontFamily="Consolas"/>
+                                        <TextBlock x:Name="TwinSpd" Text="18.5m/s" Foreground="#00FF88" FontSize="8" FontFamily="Consolas"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Suction Cone (shown during intercept) -->
+                            <Polygon x:Name="SuctionCone" Points="210,80 190,110 230,110" Fill="#00FF8820" Stroke="#00FF88" StrokeThickness="0.5" Visibility="Collapsed"/>
+                        </Canvas>
+                    </Grid>
+                </Border>
+
+                <!-- Sensor Readouts -->
+                <Border Grid.Row="1" Style="{StaticResource PanelStyle}">
+                    <Grid Margin="8,6">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="◈ SENSOR MATRIX" Style="{StaticResource PanelHeader}" Margin="0"/>
+                        <Grid Grid.Row="1" Margin="0,4">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- LiDAR -->
+                            <Border Grid.Row="0" Grid.Column="0" Background="#0A0E1A" BorderBrush="#1A3060" BorderThickness="1" CornerRadius="4" Margin="2" Padding="6">
+                                <StackPanel>
+                                    <TextBlock Text="LiDAR" Foreground="#00D4FF" FontSize="9" FontFamily="Consolas" FontWeight="Bold"/>
+                                    <TextBlock x:Name="LidarValue" Text="---" Foreground="#E8F0FF" FontSize="16" FontFamily="Consolas" FontWeight="Bold"/>
+                                    <TextBlock Text="meters" Foreground="#5A6A8A" FontSize="8"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Microphone Array -->
+                            <Border Grid.Row="0" Grid.Column="1" Background="#0A0E1A" BorderBrush="#1A3060" BorderThickness="1" CornerRadius="4" Margin="2" Padding="6">
+                                <StackPanel>
+                                    <TextBlock Text="ACOUSTIC" Foreground="#00D4FF" FontSize="9" FontFamily="Consolas" FontWeight="Bold"/>
+                                    <TextBlock x:Name="AcousticValue" Text="---" Foreground="#E8F0FF" FontSize="16" FontFamily="Consolas" FontWeight="Bold"/>
+                                    <TextBlock Text="dB signature" Foreground="#5A6A8A" FontSize="8"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Thermal -->
+                            <Border Grid.Row="1" Grid.Column="0" Background="#0A0E1A" BorderBrush="#1A3060" BorderThickness="1" CornerRadius="4" Margin="2" Padding="6">
+                                <StackPanel>
+                                    <TextBlock Text="THERMAL" Foreground="#FFD600" FontSize="9" FontFamily="Consolas" FontWeight="Bold"/>
+                                    <TextBlock x:Name="ThermalValue" Text="---°C" Foreground="#FFD600" FontSize="16" FontFamily="Consolas" FontWeight="Bold"/>
+                                    <TextBlock x:Name="ThermalRiskLabel" Text="no target" Foreground="#5A6A8A" FontSize="8"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Suction Cone Alignment -->
+                            <Border Grid.Row="1" Grid.Column="1" Background="#0A0E1A" BorderBrush="#1A3060" BorderThickness="1" CornerRadius="4" Margin="2" Padding="6">
+                                <StackPanel>
+                                    <TextBlock Text="CONE ALIGN" Foreground="#00FF88" FontSize="9" FontFamily="Consolas" FontWeight="Bold"/>
+                                    <TextBlock x:Name="ConeAlign" Text="---%" Foreground="#00FF88" FontSize="16" FontFamily="Consolas" FontWeight="Bold"/>
+                                    <TextBlock Text="suction cone" Foreground="#5A6A8A" FontSize="8"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- STATUS BAR                                          -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <Border Grid.Row="2" Background="#080C18" BorderBrush="#1A3060" BorderThickness="0,1,0,0" Margin="0,114,0,0" Grid.RowSpan="2">
+            <Grid Margin="16,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="StatusBarText" Grid.Column="0"
+                           Text="● SYSTEM NOMINAL — Drone ALPHA-1 on patrol. Scanning border zone."
+                           Foreground="#5A6A8A" FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="COMM: " Foreground="#5A6A8A" FontSize="9"/>
+                    <TextBlock x:Name="CommStatus" Text="LINK OK  " Foreground="#00FF88" FontSize="9" FontFamily="Consolas"/>
+                    <TextBlock Text="| PING: " Foreground="#5A6A8A" FontSize="9"/>
+                    <TextBlock x:Name="PingMs" Text="12ms  " Foreground="#00D4FF" FontSize="9" FontFamily="Consolas"/>
+                    <TextBlock Text="| SIM TIME: " Foreground="#5A6A8A" FontSize="9"/>
+                    <TextBlock x:Name="SimTime" Text="00:00:00" Foreground="#00D4FF" FontSize="9" FontFamily="Consolas"/>
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
